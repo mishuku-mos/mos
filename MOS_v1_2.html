@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MOS">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>MOS — Mishuku Operation System</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{font-family:'Noto Sans JP',sans-serif;background:#0d1b2a;color:#e2eaf3;min-height:100vh;min-height:100dvh}
+    .app{max-width:420px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+    .topbar{background:#0d1b2a;border-bottom:1px solid #1e3a5f;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .topbar-title{font-size:0.9rem;font-weight:500;color:#7eb8e8;letter-spacing:0.08em}
+    .topbar-time{font-size:0.85rem;color:#7eb8e8}
+    .tabs{display:flex;background:#0a1520;border-bottom:1px solid #1e3a5f;position:sticky;top:44px;z-index:99}
+    .tab{flex:1;padding:0.6rem 0.3rem;font-size:0.7rem;color:#7eb8e8;text-align:center;cursor:pointer;border-bottom:2px solid transparent}
+    .tab.active{color:#e05c3a;border-bottom-color:#e05c3a}
+    .content{flex:1;padding:1rem;overflow-y:auto}
+    .section-label{font-size:0.75rem;color:#7eb8e8;font-weight:500;margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.06em}
+    .card{background:#132236;border:1px solid #1e3a5f;border-radius:10px;padding:1rem;margin-bottom:0.8rem}
+    .input-field{width:100%;padding:0.7rem 0.9rem;background:#0d1b2a;border:1px solid #2a5a8a;color:#e2eaf3;border-radius:8px;font-size:0.9rem;font-family:inherit;outline:none;margin-bottom:0.6rem;-webkit-appearance:none;appearance:none}
+    .input-field::placeholder{color:#4a7fa8}
+    .input-field:focus{border-color:#7eb8e8}
+    textarea.input-field{min-height:80px;resize:none}
+    .btn-outline{width:100%;padding:0.8rem;background:#0d1b2a !important;border:1.5px solid #e05c3a !important;color:#e05c3a !important;border-radius:8px;font-size:0.9rem;cursor:pointer;font-family:inherit;font-weight:500;-webkit-appearance:none;appearance:none;display:block;text-align:center}
+    .btn-solid{width:100%;padding:0.9rem;background:#e05c3a !important;color:#ffffff !important;border:none !important;border-radius:8px;font-size:0.95rem;cursor:pointer;font-family:inherit;font-weight:700;margin-top:0.5rem;-webkit-appearance:none;appearance:none;display:block;text-align:center;-webkit-text-fill-color:#ffffff !important}
+    .btn-solid:disabled{background:#3a5a72 !important;color:#7fa0b8 !important;-webkit-text-fill-color:#7fa0b8 !important}
+    .checkbox-list{display:flex;flex-direction:column;gap:0.4rem}
+    .cb-item{display:flex;align-items:center;gap:0.7rem;padding:0.55rem 0.7rem;background:#0d1b2a;border-radius:6px;cursor:pointer;border:1px solid #1e3a5f}
+    .cb-item span{font-size:0.88rem;color:#e2eaf3}
+    .cb-item input{width:16px;height:16px;cursor:pointer;accent-color:#e05c3a}
+    .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.8rem}
+    .stat-card{background:#132236;border:1px solid #1e3a5f;border-radius:10px;padding:0.8rem;text-align:center}
+    .stat-val{font-size:1.8rem;font-weight:600;margin:0.2rem 0}
+    .stat-sub{font-size:0.72rem;color:#7eb8e8}
+    .red{color:#ff7a5c}.yellow{color:#f0c040}.gray{color:#7eb8e8}.green{color:#3abf8a}
+    .task-item{background:#0d1b2a;border:1px solid #1e3a5f;border-left:3px solid #1e3a5f;border-radius:0 8px 8px 0;padding:0.9rem;margin-bottom:0.6rem}
+    .task-item.t-red{border-left-color:#e05c3a;background:#1a1218}
+    .task-item.t-yellow{border-left-color:#d4a017;background:#141208}
+    .task-head{display:flex;justify-content:space-between;margin-bottom:0.3rem;align-items:center}
+    .task-name{font-size:0.9rem;font-weight:600;color:#e2eaf3}
+    .task-pri{font-size:0.75rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px}
+    .task-pri.red{background:rgba(224,92,58,0.25);color:#ff7a5c}
+    .task-pri.yellow{background:rgba(212,160,23,0.25);color:#f0c040}
+    .task-detail{font-size:0.82rem;color:#c5d8ec;margin-bottom:0.2rem}
+    .task-meta{font-size:0.75rem;color:#7eb8e8}
+    .ward-table{width:100%;font-size:0.82rem;border-collapse:collapse}
+    .ward-table th{color:#7eb8e8;font-weight:500;padding:0.5rem 0.4rem;text-align:center;border-bottom:1px solid #1e3a5f}
+    .ward-table th:first-child{text-align:left}
+    .ward-table td{padding:0.5rem 0.4rem;text-align:center;border-bottom:1px solid #132236;color:#e2eaf3}
+    .ward-table td:first-child{text-align:left;color:#c5d8ec;font-weight:500}
+    .kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.8rem}
+    .kpi-card{background:#132236;border-radius:10px;padding:0.9rem;text-align:center}
+    .kpi-card.kpi-red{border:1.5px solid #e05c3a}
+    .kpi-card.kpi-yellow{border:1.5px solid #d4a017}
+    .kpi-card.kpi-green{border:1.5px solid #2a9c6e}
+    .kpi-card.kpi-blue{border:1.5px solid #1b6a9d}
+    .kpi-lbl{font-size:0.7rem;color:#7eb8e8;text-transform:uppercase;letter-spacing:0.06em}
+    .kpi-val{font-size:2rem;font-weight:600;margin:0.25rem 0}
+    .kpi-sub{font-size:0.7rem;color:#7eb8e8}
+    .map-table{width:100%;font-size:0.82rem;border-collapse:collapse}
+    .map-table th{background:#0d1b2a;color:#7eb8e8;font-weight:500;padding:0.5rem 0.4rem;text-align:center;border:1px solid #1e3a5f}
+    .map-table th:first-child{text-align:left}
+    .map-table td{border:1px solid #1e3a5f;padding:0.45rem 0.4rem;text-align:center;color:#e2eaf3}
+    .map-table td:first-child{text-align:left;color:#c5d8ec;font-weight:500}
+    .cell-r{background:rgba(224,92,58,0.3);color:#ff9a80;font-weight:700;border-radius:4px}
+    .cell-y{background:rgba(212,160,23,0.25);color:#f0c040;font-weight:700;border-radius:4px}
+    .cell-g{color:#4a7fa8}
+    .morning-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.7rem}
+    .morning-item{background:#0d1b2a;border-radius:8px;padding:0.7rem;text-align:center;border:1px solid #1e3a5f}
+    .m-lbl{font-size:0.7rem;color:#7eb8e8;margin-bottom:0.2rem}
+    .m-val{font-size:1.3rem;font-weight:700}
+    .progress-wrap{background:#0d1b2a;border:1px solid #1e3a5f;border-radius:8px;padding:0.8rem;margin-bottom:0.6rem}
+    .progress-row{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:0.4rem;color:#c5d8ec}
+    .progress-track{background:#1e3a5f;height:7px;border-radius:3px;overflow:hidden}
+    .progress-fill{background:linear-gradient(90deg,#1b7a9d,#2a9dcd);height:100%;border-radius:3px}
+    .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#132236;border:1px solid #2a9c6e;color:#3abf8a;padding:0.7rem 1.2rem;border-radius:8px;font-size:0.85rem;font-weight:500;z-index:999;display:none;white-space:nowrap}
+    .lw-config{background:#0a1520;border:1px solid #1e3a5f;border-radius:8px;padding:0.8rem;margin-top:0.5rem}
+    .lw-row{display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid #132236}
+    .lw-row:last-child{border-bottom:none}
+    .lw-label{font-size:0.82rem;color:#e2eaf3;font-weight:500}
+    .lw-input{width:55%;padding:0.35rem 0.5rem;background:#132236;border:1px solid #1e3a5f;color:#e2eaf3;border-radius:5px;font-size:0.78rem;outline:none;-webkit-appearance:none}
+    .lw-input::placeholder{color:#4a7fa8}
+    .divider{height:1px;background:#1e3a5f;margin:0.8rem 0}
+    .greeting{font-size:1.05rem;color:#e2eaf3;margin-bottom:0.2rem;font-weight:500}
+    .date-str{font-size:0.8rem;color:#7eb8e8;margin-bottom:1rem}
+    .trend-row{display:flex;justify-content:space-between;font-size:0.78rem;padding:0.6rem;background:#0d1b2a;border:1px solid #1e3a5f;border-radius:6px}
+    .trend-label{color:#7eb8e8}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="topbar-title">MOS — MISHUKU OS　Ver.1.2</span>
+    <span class="topbar-time" id="topTime"></span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab0" onclick="switchTab(0)">担当者<br>入力</div>
+    <div class="tab" id="tab1" onclick="switchTab(1)">看護部長<br>Dashboard</div>
+    <div class="tab" id="tab2" onclick="switchTab(2)">副院長<br>Command</div>
+    <div class="tab" id="tab3" onclick="switchTab(3)">設定</div>
+  </div>
+
+  <div class="content" id="view0">
+    <div class="greeting">こんにちは、<span id="greetName">---</span>さん</div>
+    <div class="date-str" id="dateStr"></div>
+    <div class="section-label">患者を選択</div>
+    <div class="card">
+      <input type="text" class="input-field" id="patientId" placeholder="患者ID または患者名を入力">
+    </div>
+    <div class="section-label">困っていることを選択（複数可）</div>
+    <div class="card">
+      <div class="checkbox-list" id="catList">
+        <label class="cb-item"><input type="checkbox" value="医学的判断"><span>医学的判断</span></label>
+        <label class="cb-item"><input type="checkbox" value="患者情報不足"><span>患者情報不足</span></label>
+        <label class="cb-item"><input type="checkbox" value="リソース不足"><span>リソース不足</span></label>
+        <label class="cb-item"><input type="checkbox" value="調整が進まない"><span>調整が進まない</span></label>
+        <label class="cb-item"><input type="checkbox" value="役割が不明瞭"><span>役割が不明瞭</span></label>
+        <label class="cb-item"><input type="checkbox" value="意思決定遅延"><span>意思決定遅延</span></label>
+        <label class="cb-item"><input type="checkbox" value="その他"><span>その他</span></label>
+      </div>
+    </div>
+    <div class="section-label">詳しく教えてください</div>
+    <div class="card">
+      <textarea class="input-field" id="detailText" placeholder="困っていることを詳しく書いてください"></textarea>
+    </div>
+    <button class="btn-solid" id="submitBtn" onclick="submitReport()">報告する</button>
+  </div>
+
+  <div class="content" id="view1" style="display:none">
+    <div class="section-label">タスク統計</div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-sub">緊急</div><div class="stat-val red" id="d-urgent">0</div><div class="stat-sub">未解消</div></div>
+      <div class="stat-card"><div class="stat-sub">詰まり</div><div class="stat-val yellow" id="d-stuck">0</div><div class="stat-sub">要対応</div></div>
+      <div class="stat-card"><div class="stat-sub">要注意</div><div class="stat-val gray" id="d-watch">0</div><div class="stat-sub">経過観察</div></div>
+      <div class="stat-card"><div class="stat-sub">完了</div><div class="stat-val green" id="d-done">0</div><div class="stat-sub">本日</div></div>
+    </div>
+    <div class="section-label">最新の報告</div>
+    <div id="reportList"><div style="color:#4a7fa8;font-size:0.85rem;padding:0.5rem">まだ報告がありません</div></div>
+    <div class="section-label" style="margin-top:0.5rem">病棟別パターン分析</div>
+    <div class="card">
+      <table class="ward-table">
+        <thead><tr><th>病棟</th><th>緊急</th><th>詰まり</th><th>要注意</th><th>傾向</th></tr></thead>
+        <tbody>
+          <tr><td>呼吸器</td><td class="red" id="w1r">—</td><td class="yellow" id="w1y">—</td><td id="w1w">—</td><td class="yellow">—</td></tr>
+          <tr><td>循環器</td><td class="red" id="w2r">—</td><td class="yellow" id="w2y">—</td><td id="w2w">—</td><td class="gray">—</td></tr>
+          <tr><td>神経内科</td><td class="red" id="w3r">—</td><td class="yellow" id="w3y">—</td><td id="w3w">—</td><td class="green">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="content" id="view2" style="display:none">
+    <div class="section-label">KPI</div>
+    <div class="kpi-row">
+      <div class="kpi-card kpi-red"><div class="kpi-lbl">緊急タスク</div><div class="kpi-val red" id="k-urgent">0</div><div class="kpi-sub">未解消</div></div>
+      <div class="kpi-card kpi-yellow"><div class="kpi-lbl">詰まり</div><div class="kpi-val yellow" id="k-stuck">0</div><div class="kpi-sub">要対応</div></div>
+      <div class="kpi-card kpi-green"><div class="kpi-lbl">本日完了</div><div class="kpi-val green" id="k-done">0</div><div class="kpi-sub">完了済み</div></div>
+      <div class="kpi-card kpi-blue"><div class="kpi-lbl">総報告数</div><div class="kpi-val" style="color:#4ab8e8" id="k-total">0</div><div class="kpi-sub">本日累計</div></div>
+    </div>
+    <div class="section-label">詰まりマップ（種別 × 発生件数）</div>
+    <div class="card">
+      <table class="map-table">
+        <thead><tr><th>種別</th><th>件数</th><th>優先度</th></tr></thead>
+        <tbody id="mapBody">
+          <tr><td colspan="3" style="color:#4a7fa8;text-align:center">報告データなし</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-label">朝ミーティング統合データ</div>
+    <div class="card">
+      <div class="morning-grid">
+        <div class="morning-item"><div class="m-lbl">救急応需率（昨日）</div><div class="m-val green">—</div></div>
+        <div class="morning-item"><div class="m-lbl">総報告数（本日）</div><div class="m-val yellow" id="m-total">0件</div></div>
+        <div class="morning-item"><div class="m-lbl">未解消緊急</div><div class="m-val red" id="m-urgent">0件</div></div>
+        <div class="morning-item"><div class="m-lbl">詰まり件数</div><div class="m-val yellow" id="m-stuck">0件</div></div>
+      </div>
+      <div class="trend-row">
+        <span class="trend-label">最多詰まり種別</span>
+        <span style="color:#f0c040;font-weight:600" id="topCat">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" id="view3" style="display:none">
+    <div class="section-label">ユーザー設定</div>
+    <div class="card">
+      <div style="font-size:0.82rem;color:#7eb8e8;margin-bottom:0.5rem">あなたの名前</div>
+      <input type="text" class="input-field" id="userNameInput" placeholder="例：田中 花子">
+      <button class="btn-solid" onclick="saveName()">保存する</button>
+    </div>
+    <div class="section-label">LINE WORKS 通知設定</div>
+    <div class="card">
+      <div style="font-size:0.8rem;color:#7eb8e8;margin-bottom:0.7rem">Webhook URL を設定すると報告時に自動通知されます。</div>
+      <div class="lw-config">
+        <div class="lw-row"><span class="lw-label">看護部長</span><input class="lw-input" id="lw0" placeholder="Webhook URL"></div>
+        <div class="lw-row"><span class="lw-label">副院長</span><input class="lw-input" id="lw1" placeholder="Webhook URL"></div>
+        <div class="lw-row"><span class="lw-label">医師グループ</span><input class="lw-input" id="lw2" placeholder="Webhook URL"></div>
+        <div class="lw-row"><span class="lw-label">MSW グループ</span><input class="lw-input" id="lw3" placeholder="Webhook URL"></div>
+        <div class="lw-row"><span class="lw-label">リハ グループ</span><input class="lw-input" id="lw4" placeholder="Webhook URL"></div>
+        <div class="lw-row"><span class="lw-label">栄養 グループ</span><input class="lw-input" id="lw5" placeholder="Webhook URL"></div>
+      </div>
+      <button class="btn-solid" onclick="saveLW()" style="margin-top:0.8rem">LINE WORKS 設定を保存</button>
+    </div>
+    <div class="section-label">データ管理</div>
+    <div class="card">
+      <div style="font-size:0.82rem;color:#7eb8e8;margin-bottom:0.5rem">保存された報告データ数</div>
+      <div style="font-size:1.5rem;font-weight:700;color:#7eb8e8" id="reportCount">0 件</div>
+      <div class="divider"></div>
+      <button class="btn-outline" onclick="testNotify()">テスト通知を送信</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TABS=['view0','view1','view2','view3'];
+function switchTab(n){
+  TABS.forEach((id,i)=>{
+    document.getElementById(id).style.display=i===n?'block':'none';
+    document.getElementById('tab'+i).classList.toggle('active',i===n);
+  });
+  if(n===1||n===2)updateDashboard();
+  if(n===3)loadSettings();
+}
+function updateClock(){
+  const now=new Date();
+  document.getElementById('topTime').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+}
+function updateDate(){
+  const now=new Date();
+  const days=['日','月','火','水','木','金','土'];
+  document.getElementById('dateStr').textContent=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+}
+function loadGreeting(){
+  document.getElementById('greetName').textContent=localStorage.getItem('mos_username')||'---';
+}
+function showToast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=isErr?'#e05c3a':'#2a9c6e';
+  t.style.color=isErr?'#ff7a5c':'#3abf8a';
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+function prioritize(cats){
+  if(cats.includes('医学的判断')||cats.includes('意思決定遅延'))return'RED';
+  if(cats.includes('患者情報不足')||cats.includes('調整が進まない'))return'YELLOW';
+  return'WATCH';
+}
+function sendLW(report,priority){
+  const keys=['lw_0','lw_1','lw_2','lw_3','lw_4','lw_5'];
+  const msg=`[MOS ${priority}]\n患者: ${report.patientId}\n担当: ${report.userName}\n種別: ${report.categories.join('・')}\n詳細: ${report.details}\n時刻: ${new Date(report.timestamp).toLocaleTimeString('ja-JP')}`;
+  keys.forEach(k=>{
+    const url=localStorage.getItem(k);
+    if(url)fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:msg})}).catch(()=>{});
+  });
+}
+function submitReport(){
+  const pid=document.getElementById('patientId').value.trim();
+  const cats=Array.from(document.querySelectorAll('#catList input:checked')).map(c=>c.value);
+  const detail=document.getElementById('detailText').value.trim();
+  if(!pid){showToast('患者IDを入力してください',true);return;}
+  if(!cats.length){showToast('困っていることを選択してください',true);return;}
+  if(!detail){showToast('詳細を入力してください',true);return;}
+  const report={patientId:pid,categories:cats,details:detail,timestamp:new Date().toISOString(),userName:localStorage.getItem('mos_username')||'unknown',priority:prioritize(cats)};
+  const reports=JSON.parse(localStorage.getItem('mos_reports')||'[]');
+  reports.push(report);
+  localStorage.setItem('mos_reports',JSON.stringify(reports));
+  sendLW(report,report.priority);
+  const btn=document.getElementById('submitBtn');
+  btn.textContent='送信中...';btn.disabled=true;
+  setTimeout(()=>{
+    document.getElementById('patientId').value='';
+    document.querySelectorAll('#catList input').forEach(c=>c.checked=false);
+    document.getElementById('detailText').value='';
+    btn.textContent='報告する';btn.disabled=false;
+    showToast(`報告完了 [${report.priority}] 通知済`);
+  },900);
+}
+function updateDashboard(){
+  const reports=JSON.parse(localStorage.getItem('mos_reports')||'[]');
+  const today=new Date().toDateString();
+  const todayReports=reports.filter(r=>new Date(r.timestamp).toDateString()===today);
+  const red=todayReports.filter(r=>r.priority==='RED').length;
+  const yellow=todayReports.filter(r=>r.priority==='YELLOW').length;
+  const watch=todayReports.filter(r=>r.priority==='WATCH').length;
+  ['d-urgent','k-urgent'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=red;});
+  ['d-stuck','k-stuck'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=yellow;});
+  const dw=document.getElementById('d-watch');if(dw)dw.textContent=watch;
+  const dd=document.getElementById('d-done');if(dd)dd.textContent=0;
+  const kd=document.getElementById('k-done');if(kd)kd.textContent=0;
+  const kt=document.getElementById('k-total');if(kt)kt.textContent=todayReports.length;
+  const mt=document.getElementById('m-total');if(mt)mt.textContent=todayReports.length+'件';
+  const mu=document.getElementById('m-urgent');if(mu)mu.textContent=red+'件';
+  const ms=document.getElementById('m-stuck');if(ms)ms.textContent=yellow+'件';
+  const rl=document.getElementById('reportList');
+  if(rl){
+    if(todayReports.length===0){
+      rl.innerHTML='<div style="color:#4a7fa8;font-size:0.85rem;padding:0.5rem">まだ報告がありません</div>';
+    } else {
+      const latest=[...todayReports].reverse().slice(0,5);
+      rl.innerHTML=latest.map(r=>{
+        const cls=r.priority==='RED'?'t-red':r.priority==='YELLOW'?'t-yellow':'';
+        const priCls=r.priority==='RED'?'red':'yellow';
+        const priLabel=r.priority==='RED'?'緊急':r.priority==='YELLOW'?'詰まり':'要注意';
+        const time=new Date(r.timestamp).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="task-item ${cls}"><div class="task-head"><span class="task-name">${r.patientId}</span><span class="task-pri ${priCls}">${priLabel}</span></div><div class="task-detail">${r.categories.join('・')}</div><div class="task-meta">${time} ｜ ${r.userName} ｜ ${r.details.substring(0,20)}${r.details.length>20?'...':''}</div></div>`;
+      }).join('');
+    }
+  }
+  const catCount={};
+  todayReports.forEach(r=>r.categories.forEach(c=>{catCount[c]=(catCount[c]||0)+1;}));
+  const mb=document.getElementById('mapBody');
+  if(mb){
+    const entries=Object.entries(catCount).sort((a,b)=>b[1]-a[1]);
+    if(entries.length===0){
+      mb.innerHTML='<tr><td colspan="3" style="color:#4a7fa8;text-align:center">報告データなし</td></tr>';
+    } else {
+      mb.innerHTML=entries.map(([cat,cnt])=>{
+        const max=entries[0][1];
+        const cls=cnt===max?'cell-r':cnt>1?'cell-y':'cell-g';
+        const lbl=cnt===max?'高':'中';
+        return `<tr><td>${cat}</td><td class="${cls}">${cnt}件</td><td class="${cls}">${lbl}</td></tr>`;
+      }).join('');
+    }
+  }
+  const tc=document.getElementById('topCat');
+  if(tc){
+    const top=Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+    tc.textContent=top?`${top[0]}（${top[1]}件）`:'—';
+  }
+}
+function loadSettings(){
+  document.getElementById('userNameInput').value=localStorage.getItem('mos_username')||'';
+  for(let i=0;i<6;i++)document.getElementById('lw'+i).value=localStorage.getItem('lw_'+i)||'';
+  document.getElementById('reportCount').textContent=(JSON.parse(localStorage.getItem('mos_reports')||'[]')).length+' 件';
+}
+function saveName(){
+  const v=document.getElementById('userNameInput').value.trim();
+  if(!v){showToast('名前を入力してください',true);return;}
+  localStorage.setItem('mos_username',v);
+  loadGreeting();
+  showToast('名前を保存しました');
+}
+function saveLW(){
+  for(let i=0;i<6;i++)localStorage.setItem('lw_'+i,document.getElementById('lw'+i).value.trim());
+  showToast('LINE WORKS 設定を保存しました');
+}
+function testNotify(){
+  const test={patientId:'テスト患者',categories:['医学的判断'],details:'テスト通知です',timestamp:new Date().toISOString(),userName:localStorage.getItem('mos_username')||'テスト'};
+  sendLW(test,'TEST');
+  showToast('テスト通知を送信しました');
+}
+updateClock();
+updateDate();
+loadGreeting();
+setInterval(updateClock,30000);
+</script>
+</body>
+</html>
